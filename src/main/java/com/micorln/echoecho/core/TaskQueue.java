@@ -15,14 +15,14 @@ Requirements:
 public class TaskQueue {
 
     Queue<Runnable> taskQueue;
-    volatile String state = "RUNNING";
+    volatile boolean open = true;
 
     public TaskQueue() {
         this.taskQueue = new LinkedList<Runnable>();
     }
 
     public void shutdown() {
-        state = "SHUTDOWN";
+        open = false;
     }
 
     public synchronized void submit(Runnable task) {
@@ -31,10 +31,10 @@ public class TaskQueue {
     }
 
     public synchronized Runnable pollTask() throws InterruptedException {
-        while (taskQueue.size() == 0 && !state.equals("SHUTDOWN")) {
+        while (taskQueue.size() == 0 && open) {
             wait();
         }
-        if (state.equals("SHUTDOWN")) {
+        if (!open) {
             return null;
         }
         Runnable topTask = taskQueue.poll();

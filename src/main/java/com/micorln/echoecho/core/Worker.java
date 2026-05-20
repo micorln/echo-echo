@@ -12,53 +12,69 @@ package com.micorln.echoecho.core;
 public class Worker implements Runnable {
 
     TaskQueue taskQueue;
-    int index;
-    Thread thread;
-    volatile String workerState;
+    private int index;
+    private Thread thread;
+    private volatile WorkerState workerState;
 
     public Worker(TaskQueue taskQueue, int index) {
         this.taskQueue = taskQueue;
         this.index = index;
         thread = new Thread(this);
-        workerState = "IDLE";
-    }
-
-    public void start() {
-        workerState = "RUNNING";
-        thread.start();
+        workerState = WorkerState.IDLE;
     }
 
     @Override
     public void run() {
-        while (!workerState.equals("STOPPING")) {
+        while (true && !thread.isInterrupted()) {
             try {
                 Runnable task = taskQueue.pollTask();
                 if (task == null) {
                     break;
                 }
+                workerState = WorkerState.RUNNING;
                 System.out.println("Thread " + String.valueOf(index) + " : Assigned a task!");
                 executeTask(task);
             } catch(InterruptedException e) {
                 System.out.println("Thread " + String.valueOf(index) + " : Task was interrupted!");
             }
         }
-        System.out.println("Thread " + String.valueOf(index) + " : I rest now. Bye!");
+        if (thread.isInterrupted()) {
+            System.out.println("Thread " + String.valueOf(index) + " : was interrupted!");
+            workerState = WorkerState.INTERRUPTED;
+        } else {
+            workerState = WorkerState.STOPPED;
+        }
+        
+        System.out.println("Thread " + String.valueOf(index) + " : Bye friend. I rest now.");
     }
 
     private void executeTask(Runnable task) {
         try {
             task.run();
-        } catch (Exception e) {
+        } catch (Throwable e) {
             // Handle exceptions thrown by tasks to prevent worker thread from crashing
             System.err.println("Task threw an exception: " + e.getMessage());
         }
     }
-
-    public void shutdown() {
-        workerState = "STOPPING";
-    }
     
-    public void join() throws InterruptedException {
-        thread.join();
+    public void join(long timeoutMillis) throws InterruptedException {
+        thread.join(timeoutMillis);
     }
+
+    public int getIndex() {
+        return index;
+    }
+
+    public boolean isThreadAlive() {
+        return thread.isAlive();
+    }
+
+    public void interrupt() {
+        thread.interrupt();
+    }
+
+    public void start() {
+        thread.start();
+    }
+
 }

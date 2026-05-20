@@ -20,38 +20,55 @@ public class EchoEcho {
     int threadPoolSize;
     TaskQueue taskQueue;
     List<Worker> workers;
-    public volatile String threadPoolStatus;
+    private volatile PoolState poolState;
 
     public EchoEcho(int threadPoolSize) {
         workers = new ArrayList<>();
         this.threadPoolSize = threadPoolSize;
         this.taskQueue = new TaskQueue();
-        threadPoolStatus = "STARTED";
+        this.poolState = PoolState.IDLE;
     }
 
     public void submit(Runnable task) {
+        if (!poolState.equals(PoolState.IDLE) && !poolState.equals(PoolState.RUNNING)) {
+            System.out.println(poolState);
+            throw new RuntimeException("EchoEcho has been shut down, no more tasks are allowed!");
+        }
         taskQueue.submit(task);
         if (workers.size() < threadPoolSize && taskQueue.size() > 0) {
             Worker newGuy = new Worker(taskQueue, workers.size() + 1);
             newGuy.start();
             workers.add(newGuy);
-        }
-    }
-
-    public void shutdown() {
-        threadPoolStatus = "SHUTDOWN";
-        taskQueue.shutdown();
-        for (Worker w : workers) {
-            try {
-                w.shutdown();
-                w.join();
-            } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+            if (workers.size() == 1) {
+                poolState = PoolState.RUNNING;
             }
         }
     }
 
+    public void shutdown() {
+        poolState = PoolState.SHUTTING_DOWN;
+        taskQueue.shutdown();
+    }
 
-    
+    public void awaitTermination(long timeoutMillis) {
+        long deadline = System.currentTimeMillis() + timeoutMillis;
+        for (Worker w : workers) {
+            if (System.currentTimeMillis() >= deadline) {
+                break;
+            }
+            try {
+                w.join(timeoutMillis);
+            } catch (InterruptedException e) {
+                System.out.println("Thread " + w.getIndex() + " was interrupted!");
+            }
+        }
+        for (Worker w : workers) {
+            if (w.isThreadAlive()) {
+                System.out.println("Rest now brother " + w.getIndex());
+                w.interrupt();
+            }
+        }
+        poolState = PoolState.STOPPED;
+    }
+
 }
