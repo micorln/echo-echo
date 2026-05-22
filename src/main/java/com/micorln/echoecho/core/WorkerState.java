@@ -4,5 +4,6 @@ public enum WorkerState {
     IDLE,
     RUNNING,
     INTERRUPTED,
-    STOPPED
+    STOPPED,
+    COMPLETED
 }

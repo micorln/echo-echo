@@ -2,6 +2,7 @@ package com.micorln.echoecho.core;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
 
 
 /*
@@ -30,11 +31,8 @@ public class EchoEcho {
     }
 
     public void submit(Runnable task) {
-        if (!poolState.equals(PoolState.IDLE) && !poolState.equals(PoolState.RUNNING)) {
-            System.out.println(poolState);
-            throw new RuntimeException("EchoEcho has been shut down, no more tasks are allowed!");
-        }
-        taskQueue.submit(task);
+        checkPoolState();
+        taskQueue.submit(new RunnableTask(task));
         if (workers.size() < threadPoolSize && taskQueue.size() > 0) {
             Worker newGuy = new Worker(taskQueue, workers.size() + 1);
             newGuy.start();
@@ -42,6 +40,30 @@ public class EchoEcho {
             if (workers.size() == 1) {
                 poolState = PoolState.RUNNING;
             }
+        }
+    }
+
+    public <T> EchoFuture<T> submit(Callable<T> task) {
+        checkPoolState();
+        CallableTask<T> newCallableTask = new CallableTask<T>(task);
+        taskQueue.submit(newCallableTask);
+        
+        if (workers.size() < threadPoolSize && taskQueue.size() > 0) {
+            Worker newGuy = new Worker(taskQueue, workers.size() + 1);
+            newGuy.start();
+            workers.add(newGuy);
+            if (workers.size() == 1) {
+                poolState = PoolState.RUNNING;
+            }
+        }
+        return newCallableTask.getFuture();
+
+    }
+
+    private void checkPoolState() {
+        if (!poolState.equals(PoolState.IDLE) && !poolState.equals(PoolState.RUNNING)) {
+            System.out.println(poolState);
+            throw new RuntimeException("EchoEcho has been shut down, no more tasks are allowed!");
         }
     }
 

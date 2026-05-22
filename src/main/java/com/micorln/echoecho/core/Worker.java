@@ -1,5 +1,7 @@
 package com.micorln.echoecho.core;
 
+import java.util.concurrent.Callable;
+
 /*
  * Class that represents a worker thread.
  * A thread pool will consist of such workers
@@ -27,13 +29,13 @@ public class Worker implements Runnable {
     public void run() {
         while (true && !thread.isInterrupted()) {
             try {
-                Runnable task = taskQueue.pollTask();
+                TaskWrapper task = taskQueue.pollTask();
                 if (task == null) {
                     break;
                 }
                 workerState = WorkerState.RUNNING;
                 System.out.println("Thread " + String.valueOf(index) + " : Assigned a task!");
-                executeTask(task);
+                task.run();
             } catch(InterruptedException e) {
                 System.out.println("Thread " + String.valueOf(index) + " : Task was interrupted!");
             }
@@ -42,19 +44,10 @@ public class Worker implements Runnable {
             System.out.println("Thread " + String.valueOf(index) + " : was interrupted!");
             workerState = WorkerState.INTERRUPTED;
         } else {
-            workerState = WorkerState.STOPPED;
+            workerState = WorkerState.COMPLETED;
         }
         
         System.out.println("Thread " + String.valueOf(index) + " : Bye friend. I rest now.");
-    }
-
-    private void executeTask(Runnable task) {
-        try {
-            task.run();
-        } catch (Throwable e) {
-            // Handle exceptions thrown by tasks to prevent worker thread from crashing
-            System.err.println("Task threw an exception: " + e.getMessage());
-        }
     }
     
     public void join(long timeoutMillis) throws InterruptedException {
@@ -75,6 +68,10 @@ public class Worker implements Runnable {
 
     public void start() {
         thread.start();
+    }
+
+    public WorkerState getWorkerState() {
+        return workerState;
     }
 
 }

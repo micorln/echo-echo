@@ -14,30 +14,31 @@ Requirements:
 
 public class TaskQueue {
 
-    Queue<Runnable> taskQueue;
+    Queue<TaskWrapper> taskQueue;
     volatile boolean open = true;
 
     public TaskQueue() {
-        this.taskQueue = new LinkedList<Runnable>();
+        this.taskQueue = new LinkedList<TaskWrapper>();
     }
 
     public void shutdown() {
         open = false;
     }
 
-    public synchronized void submit(Runnable task) {
+    public synchronized void submit(TaskWrapper task) {
         taskQueue.add(task);
         notifyAll();
     }
 
-    public synchronized Runnable pollTask() throws InterruptedException {
+    public synchronized TaskWrapper pollTask() throws InterruptedException {
         while (taskQueue.size() == 0 && open) {
             wait();
         }
         if (!open) {
             return null;
         }
-        Runnable topTask = taskQueue.poll();
+
+        TaskWrapper topTask = taskQueue.poll();
         notifyAll();
         return topTask;
     }
