@@ -32,13 +32,21 @@ public class Worker implements Runnable {
                     break;
                 }
                 workerState = WorkerState.RUNNING;
-                System.out.println("Thread " + String.valueOf(index) + " : Assigned a task!");
-                task.run();
+                System.out.println("Thread " + String.valueOf(index) + " : Assigned task : " + String.valueOf(task.getTaskId()) + "!");
+                task.setExecutionStartTime();
+                try {
+                    task.run();
+                } catch(Exception e) {
+                    throw new RuntimeException("Thread " + String.valueOf(index) + " : Task" + String.valueOf(task.getTaskId()) + 
+                    "threw an exception! " + e.getMessage());
+                }
+                task.setExecutionEndTime();
+                System.out.println("Thread " + String.valueOf(index) + " : Completed task : " + String.valueOf(task.getTaskId()) + " in " 
+                        + String.valueOf(task.getExecutionEndTime() - task.getExecutionStartTime()) + " ms!");
             } catch(InterruptedException e) {
                 System.out.println("Thread " + String.valueOf(index) + " : Task was interrupted!");
-            }
-            catch(Exception e) {
-                System.out.println("Thread " + String.valueOf(index) + " : Task threw an exception! " + e.getMessage());
+            } catch (Exception ex) {
+                System.out.println(ex);
             }
         }
         if (thread.isInterrupted()) {

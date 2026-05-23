@@ -27,16 +27,19 @@ public class TaskQueue {
     }
 
     public synchronized void submit(TaskWrapper task) {
+        if (!open) {
+            throw new IllegalStateException("Cannot submit task to a closed TaskQueue!");
+        }
         taskQueue.add(task);
         notifyAll();
     }
 
     public synchronized TaskWrapper pollTask() throws InterruptedException {
-        while (taskQueue.size() == 0 && open) {
+        while (taskQueue.size() == 0) {
+            if (!open) {
+                return null;
+            }
             wait();
-        }
-        if (!open) {
-            return null;
         }
 
         TaskWrapper topTask = taskQueue.poll();

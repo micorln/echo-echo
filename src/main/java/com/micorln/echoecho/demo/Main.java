@@ -8,13 +8,14 @@ public class Main {
 
     public static void main(String[] args) {
         System.out.println("\n\n----");
-        int numThreads = 10;
+        int numThreads = 2;
         EchoEcho echoEcho = new EchoEcho(numThreads);
         long startTime = System.currentTimeMillis();
         AtomicInteger threadsStarted = new AtomicInteger(0);
         int i = 0;
+       
         for (i = 0; i < numThreads; i++) {
-            System.out.println("Submitting task : " + String.valueOf(i));
+            System.out.println("Submitting task : " + String.valueOf(i+1));
             echoEcho.submit(() -> {
                 try {
                     Thread.sleep(1000);
@@ -27,7 +28,6 @@ public class Main {
         echoEcho.shutdown();
         echoEcho.awaitTermination(5000L);
         System.out.println("Took  " + String.valueOf((System.currentTimeMillis() - startTime)) + " milli seconds to complete! ");
-
     }
     
 }

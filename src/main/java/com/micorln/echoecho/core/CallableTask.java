@@ -2,7 +2,7 @@ package com.micorln.echoecho.core;
 
 import java.util.concurrent.Callable;
 
-public class CallableTask<T> implements TaskWrapper {
+public class CallableTask<T> extends TaskWrapper {
 
     private T result;
 
@@ -28,7 +28,8 @@ public class CallableTask<T> implements TaskWrapper {
         }
     }
 
-    public CallableTask(Callable<T> callable) {
+    public CallableTask(Callable<T> callable, long taskId) {
+        super(taskId);
         this.task = callable;
         this.future = new EchoFuture<T>();
     }

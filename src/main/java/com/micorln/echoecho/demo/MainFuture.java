@@ -20,8 +20,8 @@ public class MainFuture {
             System.out.println("Submitting task : " + String.valueOf(i));
             EchoFuture <String> future = echoEcho.submit(() -> {
                 Thread.sleep(1000);
-                System.out.println("Thread " + String.valueOf(threadsStarted.incrementAndGet()) + " says hello!");
-                return "Hello from thread " + String.valueOf(threadsStarted.incrementAndGet());
+                System.out.println("Thread " + String.valueOf(threadsStarted.get()) + " says hello!");
+                return "Hello from thread " + String.valueOf(threadsStarted.get());
             });
             futures.add(future);
         }

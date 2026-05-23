@@ -3,6 +3,7 @@ package com.micorln.echoecho.core;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 /*
@@ -22,17 +23,20 @@ public class EchoEcho {
     TaskQueue taskQueue;
     List<Worker> workers;
     private volatile PoolState poolState;
+    AtomicInteger taskIds;
 
     public EchoEcho(int threadPoolSize) {
         workers = new ArrayList<>();
         this.threadPoolSize = threadPoolSize;
         this.taskQueue = new TaskQueue();
         this.poolState = PoolState.IDLE;
+        this.taskIds = new AtomicInteger(0);
     }
 
     public synchronized void submit(Runnable task) {
         checkPoolState();
-        taskQueue.submit(new RunnableTask(task));
+        RunnableTask newRunnableTask = new RunnableTask(task, taskIds.incrementAndGet());
+        taskQueue.submit(newRunnableTask);
         if (workers.size() < threadPoolSize && taskQueue.size() > 0) {
             Worker newGuy = new Worker(taskQueue, workers.size() + 1);
             newGuy.start();
@@ -45,7 +49,7 @@ public class EchoEcho {
 
     public synchronized <T> EchoFuture<T> submit(Callable<T> task) {
         checkPoolState();
-        CallableTask<T> newCallableTask = new CallableTask<T>(task);
+        CallableTask<T> newCallableTask = new CallableTask<T>(task, taskIds.incrementAndGet());
         taskQueue.submit(newCallableTask);
         
         if (workers.size() < threadPoolSize && taskQueue.size() > 0) {
