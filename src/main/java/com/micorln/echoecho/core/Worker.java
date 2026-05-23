@@ -1,7 +1,5 @@
 package com.micorln.echoecho.core;
 
-import java.util.concurrent.Callable;
-
 /*
  * Class that represents a worker thread.
  * A thread pool will consist of such workers

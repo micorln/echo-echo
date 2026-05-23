@@ -1,7 +1,5 @@
 package com.micorln.echoecho.core;
 
-import javax.naming.TimeLimitExceededException;
-
 public class EchoFuture<T> {
 
     volatile T resultValue;
@@ -41,7 +39,7 @@ public class EchoFuture<T> {
     public T get() {
 
         while (!hasCompleted && !hasFailed) {
-            
+
 
         }
         if (hasFailed) {

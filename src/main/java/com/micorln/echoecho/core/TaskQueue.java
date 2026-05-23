@@ -21,8 +21,9 @@ public class TaskQueue {
         this.taskQueue = new LinkedList<TaskWrapper>();
     }
 
-    public void shutdown() {
+    public synchronized void shutdown() {
         open = false;
+        notifyAll();
     }
 
     public synchronized void submit(TaskWrapper task) {

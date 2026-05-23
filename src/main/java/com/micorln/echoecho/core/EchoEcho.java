@@ -30,7 +30,7 @@ public class EchoEcho {
         this.poolState = PoolState.IDLE;
     }
 
-    public void submit(Runnable task) {
+    public synchronized void submit(Runnable task) {
         checkPoolState();
         taskQueue.submit(new RunnableTask(task));
         if (workers.size() < threadPoolSize && taskQueue.size() > 0) {
@@ -43,7 +43,7 @@ public class EchoEcho {
         }
     }
 
-    public <T> EchoFuture<T> submit(Callable<T> task) {
+    public synchronized <T> EchoFuture<T> submit(Callable<T> task) {
         checkPoolState();
         CallableTask<T> newCallableTask = new CallableTask<T>(task);
         taskQueue.submit(newCallableTask);
@@ -60,19 +60,19 @@ public class EchoEcho {
 
     }
 
-    private void checkPoolState() {
+    private synchronized void checkPoolState() {
         if (!poolState.equals(PoolState.IDLE) && !poolState.equals(PoolState.RUNNING)) {
             System.out.println(poolState);
             throw new RuntimeException("EchoEcho has been shut down, no more tasks are allowed!");
         }
     }
 
-    public void shutdown() {
+    public synchronized void shutdown() {
         poolState = PoolState.SHUTTING_DOWN;
         taskQueue.shutdown();
     }
 
-    public void awaitTermination(long timeoutMillis) {
+    public synchronized void awaitTermination(long timeoutMillis) {
         long deadline = System.currentTimeMillis() + timeoutMillis;
         for (Worker w : workers) {
             if (System.currentTimeMillis() >= deadline) {

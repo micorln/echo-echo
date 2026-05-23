@@ -25,7 +25,7 @@ public class Main {
             });
         }
         echoEcho.shutdown();
-        echoEcho.awaitTermination(2000L);
+        echoEcho.awaitTermination(5000L);
         System.out.println("Took  " + String.valueOf((System.currentTimeMillis() - startTime)) + " milli seconds to complete! ");
 
     }

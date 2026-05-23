@@ -27,7 +27,7 @@ public class MainFuture {
         }
         for (EchoFuture<String> f : futures) {
             String res = f.get();
-            System.out.println("Got result from future : " + res);
+            System.out.println("Got result from thread : " + res);
         }
 
         echoEcho.shutdown();

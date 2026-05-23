@@ -18,7 +18,7 @@ public class CallableTask<T> implements TaskWrapper {
         return future;
     }
 
-    public void run() {
+    public synchronized void run() {
         try {
             future.setResult(task.call());
             future.complete();
