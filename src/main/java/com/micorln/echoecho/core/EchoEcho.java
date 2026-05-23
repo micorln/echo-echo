@@ -30,28 +30,40 @@ public class EchoEcho {
         this.threadPoolSize = threadPoolSize;
         this.taskQueue = new TaskQueue();
         this.poolState = PoolState.IDLE;
-        this.taskIds = new AtomicInteger(0);
+        this.taskIds = new AtomicInteger(-1);
     }
 
     public synchronized void submit(Runnable task) {
         checkPoolState();
         RunnableTask newRunnableTask = new RunnableTask(task, taskIds.incrementAndGet());
         taskQueue.submit(newRunnableTask);
-        if (workers.size() < threadPoolSize && taskQueue.size() > 0) {
-            Worker newGuy = new Worker(taskQueue, workers.size() + 1);
-            newGuy.start();
-            workers.add(newGuy);
-            if (workers.size() == 1) {
-                poolState = PoolState.RUNNING;
-            }
-        }
+        manageWorkers();
+    }
+
+    public synchronized void submit(Runnable task, long priority) {
+        checkPoolState();
+        RunnableTask newRunnableTask = new RunnableTask(task, taskIds.incrementAndGet(), priority);
+        taskQueue.submit(newRunnableTask);
+        manageWorkers();
     }
 
     public synchronized <T> EchoFuture<T> submit(Callable<T> task) {
         checkPoolState();
         CallableTask<T> newCallableTask = new CallableTask<T>(task, taskIds.incrementAndGet());
         taskQueue.submit(newCallableTask);
-        
+        manageWorkers();
+        return newCallableTask.getFuture();
+    }
+
+    public synchronized <T> EchoFuture<T> submit(Callable<T> task, long priority) {
+        checkPoolState();
+        CallableTask<T> newCallableTask = new CallableTask<T>(task, taskIds.incrementAndGet(), priority);
+        taskQueue.submit(newCallableTask);
+        manageWorkers();
+        return newCallableTask.getFuture();
+    }
+
+    private synchronized void manageWorkers() {
         if (workers.size() < threadPoolSize && taskQueue.size() > 0) {
             Worker newGuy = new Worker(taskQueue, workers.size() + 1);
             newGuy.start();
@@ -60,8 +72,6 @@ public class EchoEcho {
                 poolState = PoolState.RUNNING;
             }
         }
-        return newCallableTask.getFuture();
-
     }
 
     private synchronized void checkPoolState() {

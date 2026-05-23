@@ -1,6 +1,7 @@
 package com.micorln.echoecho.core;
 
 import java.util.LinkedList;
+import java.util.PriorityQueue;
 import java.util.Queue;
 
 /*
@@ -14,11 +15,14 @@ Requirements:
 
 public class TaskQueue {
 
-    Queue<TaskWrapper> taskQueue;
+    PriorityQueue<TaskWrapper> taskQueue;
+
     volatile boolean open = true;
 
     public TaskQueue() {
-        this.taskQueue = new LinkedList<TaskWrapper>();
+        this.taskQueue = new PriorityQueue<>(
+            (t1, t2) -> Long.compare(t2.getPriority(), t1.getPriority())
+        );
     }
 
     public synchronized void shutdown() {

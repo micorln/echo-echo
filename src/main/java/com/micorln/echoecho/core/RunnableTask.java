@@ -9,6 +9,11 @@ public class RunnableTask extends TaskWrapper {
         this.task = task;
     }
 
+    public RunnableTask(Runnable task, long taskId, long priority) {
+        super(taskId, priority);
+        this.task = task;
+    }
+
     public void run() {
         task.run();   
     }

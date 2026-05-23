@@ -12,7 +12,7 @@
     <property name="sun.java.launcher" value="SUN_STANDARD"/>
     <property name="user.country" value="US"/>
     <property name="sun.boot.library.path" value="/Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home/lib"/>
-    <property name="sun.java.command" value="/Users/phanisriram/Coursematerial/JavaConcurrency/echo-echo/target/surefire/surefirebooter-20260523181656935_3.jar /Users/phanisriram/Coursematerial/JavaConcurrency/echo-echo/target/surefire 2026-05-23T18-16-56_901-jvmRun1 surefire-20260523181656935_1tmp surefire_0-20260523181656935_2tmp"/>
+    <property name="sun.java.command" value="/Users/phanisriram/Coursematerial/JavaConcurrency/echo-echo/target/surefire/surefirebooter-20260523191147530_3.jar /Users/phanisriram/Coursematerial/JavaConcurrency/echo-echo/target/surefire 2026-05-23T19-11-47_501-jvmRun1 surefire-20260523191147530_1tmp surefire_0-20260523191147530_2tmp"/>
     <property name="http.nonProxyHosts" value="local|*.local|169.254/16|*.169.254/16"/>
     <property name="jdk.debug" value="release"/>
     <property name="surefire.test.class.path" value="/Users/phanisriram/Coursematerial/JavaConcurrency/echo-echo/target/test-classes:/Users/phanisriram/Coursematerial/JavaConcurrency/echo-echo/target/classes:/Users/phanisriram/.m2/repository/junit/junit/3.8.1/junit-3.8.1.jar:"/>
@@ -29,7 +29,7 @@
     <property name="java.vm.specification.vendor" value="Oracle Corporation"/>
     <property name="java.specification.name" value="Java Platform API Specification"/>
     <property name="apple.awt.application.name" value="ForkedBooter"/>
-    <property name="surefire.real.class.path" value="/Users/phanisriram/Coursematerial/JavaConcurrency/echo-echo/target/surefire/surefirebooter-20260523181656935_3.jar"/>
+    <property name="surefire.real.class.path" value="/Users/phanisriram/Coursematerial/JavaConcurrency/echo-echo/target/surefire/surefirebooter-20260523191147530_3.jar"/>
     <property name="sun.management.compiler" value="HotSpot 64-Bit Tiered Compilers"/>
     <property name="ftp.nonProxyHosts" value="local|*.local|169.254/16|*.169.254/16"/>
     <property name="java.runtime.version" value="21.0.11+10-LTS"/>

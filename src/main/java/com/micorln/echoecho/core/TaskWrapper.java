@@ -10,8 +10,17 @@ public abstract class TaskWrapper implements Runnable {
 
     private long executionEndTime;
 
+    private long priority;
+
     public TaskWrapper(long taskId) {
         this.taskId = taskId;
+        submissionTime = System.currentTimeMillis();
+        this.priority = 0;
+    }
+
+    public TaskWrapper(long taskId, long priority) {
+        this.taskId = taskId;
+        this.priority = priority;
         submissionTime = System.currentTimeMillis();
     }
 
@@ -39,6 +48,10 @@ public abstract class TaskWrapper implements Runnable {
     public long setExecutionEndTime() {
         this.executionEndTime = System.currentTimeMillis();
         return executionEndTime;
+    }
+
+    public long getPriority() {
+        return priority;
     }
 
 }

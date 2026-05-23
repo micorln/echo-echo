@@ -34,4 +34,10 @@ public class CallableTask<T> extends TaskWrapper {
         this.future = new EchoFuture<T>();
     }
 
+    public CallableTask(Callable<T> callable, long taskId, long priority) {
+        super(taskId, priority);
+        this.task = callable;
+        this.future = new EchoFuture<T>();
+    }
+
 }
