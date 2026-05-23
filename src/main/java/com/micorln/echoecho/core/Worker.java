@@ -37,6 +37,9 @@ public class Worker implements Runnable {
             } catch(InterruptedException e) {
                 System.out.println("Thread " + String.valueOf(index) + " : Task was interrupted!");
             }
+            catch(Exception e) {
+                System.out.println("Thread " + String.valueOf(index) + " : Task threw an exception! " + e.getMessage());
+            }
         }
         if (thread.isInterrupted()) {
             System.out.println("Thread " + String.valueOf(index) + " : was interrupted!");
