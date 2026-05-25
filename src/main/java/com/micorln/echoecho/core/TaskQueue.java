@@ -1,8 +1,6 @@
 package com.micorln.echoecho.core;
 
-import java.util.LinkedList;
 import java.util.PriorityQueue;
-import java.util.Queue;
 
 /*
 Class to represent the task queue for the thread pool. This will be a shared resource that worker threads will pull tasks from and clients will submit tasks to.
@@ -46,6 +44,38 @@ public class TaskQueue {
             wait();
         }
 
+        TaskWrapper topTask = taskQueue.poll();
+        notifyAll();
+        return topTask;
+    }
+
+    public synchronized TaskWrapper pollTask(long timeToWait) throws InterruptedException {
+        if (taskQueue.size() == 0) {
+            if (!open) {
+                return null;
+            }
+            wait(timeToWait);
+        }
+
+        if (taskQueue.size() == 0) {
+            return null;
+        }
+
+        TaskWrapper topTask = taskQueue.poll();
+        notifyAll();
+        return topTask;
+    }
+
+    public synchronized TaskWrapper pollTask(Worker worker) throws InterruptedException {
+        while (taskQueue.size() == 0) {
+            if (!open) {
+                return null;
+            }
+            wait();
+        }
+        if (worker.getWorkerState() != WorkerState.IDLE) {
+            return null;
+        }
         TaskWrapper topTask = taskQueue.poll();
         notifyAll();
         return topTask;

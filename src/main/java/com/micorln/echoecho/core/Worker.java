@@ -15,19 +15,35 @@ public class Worker implements Runnable {
     private int index;
     private Thread thread;
     private volatile WorkerState workerState;
+    private volatile long lastIdle;
+    private long timeToWait;
 
     public Worker(TaskQueue taskQueue, int index) {
         this.taskQueue = taskQueue;
         this.index = index;
         thread = new Thread(this);
         workerState = WorkerState.IDLE;
+        setLastIdle();
+    }
+
+    public Worker(TaskQueue taskQueue, int index, long timeToWait) {
+        this.taskQueue = taskQueue;
+        this.index = index;
+        thread = new Thread(this);
+        workerState = WorkerState.IDLE;
+        setLastIdle();
+        this.timeToWait = timeToWait;
+    }
+
+    public void setLastIdle() {
+        this.lastIdle = System.currentTimeMillis();
     }
 
     @Override
     public void run() {
         while (true && !thread.isInterrupted()) {
             try {
-                TaskWrapper task = taskQueue.pollTask();
+                TaskWrapper task = taskQueue.pollTask(timeToWait);
                 if (task == null) {
                     break;
                 }
@@ -40,6 +56,8 @@ public class Worker implements Runnable {
                     throw new RuntimeException("Thread " + String.valueOf(index) + " : Task" + String.valueOf(task.getTaskId()) + 
                     "threw an exception! " + e.getMessage());
                 }
+                workerState = WorkerState.IDLE;
+                setLastIdle();
                 task.setExecutionEndTime();
                 System.out.println("Thread " + String.valueOf(index) + " : Completed task : " + String.valueOf(task.getTaskId()) + " in " 
                         + String.valueOf(task.getExecutionEndTime() - task.getExecutionStartTime()) + " ms!");

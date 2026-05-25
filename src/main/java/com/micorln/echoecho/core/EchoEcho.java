@@ -17,6 +17,13 @@ Requirements:
     * Needs to maintain state in order to run, stop, shutdown (interrupt), etc.
 */
 
+/*
+ * Pending features:
+ * 1. Scheduled execution
+ * 2. Dynamic worker management
+ * 3. Benchmarking ?
+*/
+
 public class EchoEcho {
 
     int threadPoolSize;
@@ -24,6 +31,7 @@ public class EchoEcho {
     List<Worker> workers;
     private volatile PoolState poolState;
     AtomicInteger taskIds;
+    private final long TIME_TO_WAIT = 100L;
 
     public EchoEcho(int threadPoolSize) {
         workers = new ArrayList<>();
@@ -34,13 +42,25 @@ public class EchoEcho {
     }
 
     public synchronized void submit(Runnable task) {
+        System.out.println("Current worker count : " + String.valueOf(countWorkers()));
         checkPoolState();
         RunnableTask newRunnableTask = new RunnableTask(task, taskIds.incrementAndGet());
         taskQueue.submit(newRunnableTask);
         manageWorkers();
     }
 
+    public synchronized int countWorkers() {
+        int aliveWorkers = 0;
+        for (Worker w : workers) {
+            if (w.isThreadAlive()) {
+                aliveWorkers++;
+            }
+        }
+        return aliveWorkers;
+    }
+
     public synchronized void submit(Runnable task, long priority) {
+        System.out.println("Current worker count : " + String.valueOf(countWorkers()));
         checkPoolState();
         RunnableTask newRunnableTask = new RunnableTask(task, taskIds.incrementAndGet(), priority);
         taskQueue.submit(newRunnableTask);
@@ -64,8 +84,8 @@ public class EchoEcho {
     }
 
     private synchronized void manageWorkers() {
-        if (workers.size() < threadPoolSize && taskQueue.size() > 0) {
-            Worker newGuy = new Worker(taskQueue, workers.size() + 1);
+        if (countWorkers() < threadPoolSize && taskQueue.size() > 0) {
+            Worker newGuy = new Worker(taskQueue, workers.size() + 1, TIME_TO_WAIT);
             newGuy.start();
             workers.add(newGuy);
             if (workers.size() == 1) {
@@ -106,5 +126,7 @@ public class EchoEcho {
         }
         poolState = PoolState.STOPPED;
     }
+
+
 
 }
