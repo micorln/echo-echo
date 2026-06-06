@@ -11,14 +11,14 @@ package com.micorln.echoecho.core;
 
 public class Worker implements Runnable {
 
-    TaskQueue taskQueue;
+    TaskQueue<TaskWrapper<?>> taskQueue;
     private int index;
     private Thread thread;
     private volatile WorkerState workerState;
     private volatile long lastIdle;
     private long timeToWait;
 
-    public Worker(TaskQueue taskQueue, int index) {
+    public Worker(TaskQueue<TaskWrapper<?>> taskQueue, int index) {
         this.taskQueue = taskQueue;
         this.index = index;
         thread = new Thread(this);
@@ -26,7 +26,7 @@ public class Worker implements Runnable {
         setLastIdle();
     }
 
-    public Worker(TaskQueue taskQueue, int index, long timeToWait) {
+    public Worker(TaskQueue<TaskWrapper<?>> taskQueue, int index, long timeToWait) {
         this.taskQueue = taskQueue;
         this.index = index;
         thread = new Thread(this);
@@ -43,12 +43,12 @@ public class Worker implements Runnable {
     public void run() {
         while (true && !thread.isInterrupted()) {
             try {
-                TaskWrapper task = taskQueue.pollTask(timeToWait);
+                TaskWrapper<?> task = taskQueue.pollTask(timeToWait);
                 if (task == null) {
                     break;
                 }
                 workerState = WorkerState.RUNNING;
-                System.out.println("Thread " + String.valueOf(index) + " : Assigned task : " + String.valueOf(task.getTaskId()) + "!");
+                // System.out.println("Thread " + String.valueOf(index) + " : Assigned task : " + String.valueOf(task.getTaskId()) + "!");
                 task.setExecutionStartTime();
                 try {
                     task.run();
@@ -59,8 +59,8 @@ public class Worker implements Runnable {
                 workerState = WorkerState.IDLE;
                 setLastIdle();
                 task.setExecutionEndTime();
-                System.out.println("Thread " + String.valueOf(index) + " : Completed task : " + String.valueOf(task.getTaskId()) + " in " 
-                        + String.valueOf(task.getExecutionEndTime() - task.getExecutionStartTime()) + " ms!");
+                // System.out.println("Thread " + String.valueOf(index) + " : Completed task : " + String.valueOf(task.getTaskId()) + " in " 
+                //         + String.valueOf(task.getExecutionEndTime() - task.getExecutionStartTime()) + " ms!");
             } catch(InterruptedException e) {
                 System.out.println("Thread " + String.valueOf(index) + " : Task was interrupted!");
             } catch (Exception ex) {

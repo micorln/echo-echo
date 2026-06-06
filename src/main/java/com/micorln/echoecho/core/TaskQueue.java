@@ -1,5 +1,6 @@
 package com.micorln.echoecho.core;
 
+import java.util.Comparator;
 import java.util.PriorityQueue;
 
 /*
@@ -11,16 +12,14 @@ Requirements:
     * Should handle synchronization to ensure thread safety when multiple threads are accessing the queue concurrently
 */
 
-public class TaskQueue {
-
-    PriorityQueue<TaskWrapper> taskQueue;
+public class TaskQueue <T> {
+    
+    PriorityQueue<T> taskQueue;
 
     volatile boolean open = true;
 
-    public TaskQueue() {
-        this.taskQueue = new PriorityQueue<>(
-            (t1, t2) -> Long.compare(t2.getPriority(), t1.getPriority())
-        );
+    public TaskQueue(Comparator<T> comparator) {
+        this.taskQueue = new PriorityQueue<>(comparator);
     }
 
     public synchronized void shutdown() {
@@ -28,7 +27,7 @@ public class TaskQueue {
         notifyAll();
     }
 
-    public synchronized void submit(TaskWrapper task) {
+    public synchronized void submit(T task) {
         if (!open) {
             throw new IllegalStateException("Cannot submit task to a closed TaskQueue!");
         }
@@ -36,7 +35,11 @@ public class TaskQueue {
         notifyAll();
     }
 
-    public synchronized TaskWrapper pollTask() throws InterruptedException {
+    public T peek() {
+        return taskQueue.peek();
+    }
+
+    public synchronized T pollTask() throws InterruptedException {
         while (taskQueue.size() == 0) {
             if (!open) {
                 return null;
@@ -44,12 +47,12 @@ public class TaskQueue {
             wait();
         }
 
-        TaskWrapper topTask = taskQueue.poll();
+        T topTask = taskQueue.poll();
         notifyAll();
         return topTask;
     }
 
-    public synchronized TaskWrapper pollTask(long timeToWait) throws InterruptedException {
+    public synchronized T pollTask(long timeToWait) throws InterruptedException {
         if (taskQueue.size() == 0) {
             if (!open) {
                 return null;
@@ -61,22 +64,7 @@ public class TaskQueue {
             return null;
         }
 
-        TaskWrapper topTask = taskQueue.poll();
-        notifyAll();
-        return topTask;
-    }
-
-    public synchronized TaskWrapper pollTask(Worker worker) throws InterruptedException {
-        while (taskQueue.size() == 0) {
-            if (!open) {
-                return null;
-            }
-            wait();
-        }
-        if (worker.getWorkerState() != WorkerState.IDLE) {
-            return null;
-        }
-        TaskWrapper topTask = taskQueue.poll();
+        T topTask = taskQueue.poll();
         notifyAll();
         return topTask;
     }

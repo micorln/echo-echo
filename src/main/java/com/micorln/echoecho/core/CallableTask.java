@@ -2,26 +2,25 @@ package com.micorln.echoecho.core;
 
 import java.util.concurrent.Callable;
 
-public class CallableTask<T> extends TaskWrapper {
+public class CallableTask<T> extends TaskWrapper<T> {
 
     private T result;
 
     private Callable<T> task;
 
-    private EchoFuture<T> future;
-
     public T getResult() {
         return result;
     }
 
-    public EchoFuture<T> getFuture() {
-        return future;
-    }
-
     public synchronized void run() {
         try {
-            future.setResult(task.call());
-            future.complete();
+            if (!future.hasTaskFailed()) {
+                future.setResult(task.call());
+                future.complete();
+            } else {
+                System.out.println("Task with id : " + String.valueOf(getTaskId()) + " has been cancelled. Not executing task.");
+            }
+        
         } catch (Exception ex) {
             future.cancel();
             throw new RuntimeException(ex);

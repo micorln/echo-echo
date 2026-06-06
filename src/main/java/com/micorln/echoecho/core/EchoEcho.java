@@ -27,7 +27,7 @@ Requirements:
 public class EchoEcho {
 
     int threadPoolSize;
-    TaskQueue taskQueue;
+    TaskQueue<TaskWrapper<?>> taskQueue;
     List<Worker> workers;
     private volatile PoolState poolState;
     AtomicInteger taskIds;
@@ -36,17 +36,9 @@ public class EchoEcho {
     public EchoEcho(int threadPoolSize) {
         workers = new ArrayList<>();
         this.threadPoolSize = threadPoolSize;
-        this.taskQueue = new TaskQueue();
+        this.taskQueue = new TaskQueue<TaskWrapper<?>>((t1, t2) -> Long.compare(t2.getPriority(), t1.getPriority()));
         this.poolState = PoolState.IDLE;
-        this.taskIds = new AtomicInteger(-1);
-    }
-
-    public synchronized void submit(Runnable task) {
-        System.out.println("Current worker count : " + String.valueOf(countWorkers()));
-        checkPoolState();
-        RunnableTask newRunnableTask = new RunnableTask(task, taskIds.incrementAndGet());
-        taskQueue.submit(newRunnableTask);
-        manageWorkers();
+        this.taskIds = new AtomicInteger(0);
     }
 
     public synchronized int countWorkers() {
@@ -59,12 +51,23 @@ public class EchoEcho {
         return aliveWorkers;
     }
 
-    public synchronized void submit(Runnable task, long priority) {
+
+    public synchronized EchoFuture<Void> submit(Runnable task) {
+        System.out.println("Current worker count : " + String.valueOf(countWorkers()));
+        checkPoolState();
+        RunnableTask newRunnableTask = new RunnableTask(task, taskIds.incrementAndGet());
+        taskQueue.submit(newRunnableTask);
+        manageWorkers();
+        return newRunnableTask.getFuture();
+    }
+    
+    public synchronized EchoFuture<Void> submit(Runnable task, long priority) {
         System.out.println("Current worker count : " + String.valueOf(countWorkers()));
         checkPoolState();
         RunnableTask newRunnableTask = new RunnableTask(task, taskIds.incrementAndGet(), priority);
         taskQueue.submit(newRunnableTask);
         manageWorkers();
+        return newRunnableTask.getFuture();
     }
 
     public synchronized <T> EchoFuture<T> submit(Callable<T> task) {
@@ -73,6 +76,14 @@ public class EchoEcho {
         taskQueue.submit(newCallableTask);
         manageWorkers();
         return newCallableTask.getFuture();
+    }
+
+    public synchronized <T> EchoFuture<T> submit(TaskWrapper<T> task) {
+        System.out.println("Current worker count : " + String.valueOf(countWorkers()));
+        checkPoolState();
+        taskQueue.submit(task);
+        manageWorkers();
+        return task.getFuture();
     }
 
     public synchronized <T> EchoFuture<T> submit(Callable<T> task, long priority) {

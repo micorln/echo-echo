@@ -1,6 +1,6 @@
 package com.micorln.echoecho.core;
 
-public class RunnableTask extends TaskWrapper {
+public class RunnableTask extends TaskWrapper<Void> {
 
     Runnable task;
 
@@ -15,6 +15,10 @@ public class RunnableTask extends TaskWrapper {
     }
 
     public void run() {
+        if (future.hasTaskFailed()) {
+            System.out.println("Task with id : " + String.valueOf(getTaskId()) + " has been cancelled. Not executing task.");
+            return;
+        }
         task.run();   
     }
 
