@@ -17,6 +17,7 @@ public class Worker implements Runnable {
     private volatile WorkerState workerState;
     private volatile long lastIdle;
     private long timeToWait;
+    private final boolean DEBUG = false;
 
     public Worker(TaskQueue<TaskWrapper<?>> taskQueue, int index) {
         this.taskQueue = taskQueue;
@@ -73,8 +74,10 @@ public class Worker implements Runnable {
         } else {
             workerState = WorkerState.COMPLETED;
         }
+        if (DEBUG) {
+            System.out.println("Thread " + String.valueOf(index) + " : Bye friend. I rest now.");
+        }
         
-        System.out.println("Thread " + String.valueOf(index) + " : Bye friend. I rest now.");
     }
     
     public void join(long timeoutMillis) throws InterruptedException {

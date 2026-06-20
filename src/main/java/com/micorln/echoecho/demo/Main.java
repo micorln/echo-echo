@@ -8,7 +8,7 @@ public class Main {
 
     public static void main(String[] args) {
         System.out.println("\n\n----");
-        int numThreads = 2;
+        int numThreads = 10;
         EchoEcho echoEcho = new EchoEcho(numThreads);
         long startTime = System.currentTimeMillis();
         AtomicInteger threadsStarted = new AtomicInteger(0);

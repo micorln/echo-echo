@@ -24,7 +24,7 @@ public class TaskQueue <T> {
 
     public synchronized void shutdown() {
         open = false;
-        notifyAll();
+        notify();
     }
 
     public synchronized void submit(T task) {
@@ -32,10 +32,10 @@ public class TaskQueue <T> {
             throw new IllegalStateException("Cannot submit task to a closed TaskQueue!");
         }
         taskQueue.add(task);
-        notifyAll();
+        notify();
     }
 
-    public T peek() {
+    public synchronized T peek() {
         return taskQueue.peek();
     }
 
@@ -48,7 +48,7 @@ public class TaskQueue <T> {
         }
 
         T topTask = taskQueue.poll();
-        notifyAll();
+        notify();
         return topTask;
     }
 
@@ -65,7 +65,7 @@ public class TaskQueue <T> {
         }
 
         T topTask = taskQueue.poll();
-        notifyAll();
+        notify();
         return topTask;
     }
 
