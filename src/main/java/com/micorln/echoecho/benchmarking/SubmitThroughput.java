@@ -1,6 +1,10 @@
 package com.micorln.echoecho.benchmarking;
 
 import java.util.ArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+import com.micorln.echoecho.core.EchoEcho;
 
 public class SubmitThroughput extends Benchmarker {
     
@@ -11,7 +15,8 @@ public class SubmitThroughput extends Benchmarker {
         tasks = new ArrayList<>();
     }
 
-    public void createTasks(int numTasks) {
+    public ArrayList<Runnable> createTasks(int numTasks) {
+        tasks = new ArrayList<>();
         for (int i = 0; i < numTasks; i++) {
             tasks.add(new Runnable() {
                 @Override
@@ -24,41 +29,64 @@ public class SubmitThroughput extends Benchmarker {
                 }
             });
         }
+        return tasks;
     }
 
     public static void main(String[] args) {
+
+        int threads = 4;
         SubmitThroughput submitThroughput = new SubmitThroughput(4);
-        submitThroughput.createTasks(100000);
+        ArrayList<Runnable> tasks = submitThroughput.createTasks(100000);
 
-        long startTimeEchoEcho = System.currentTimeMillis();
+        boolean runJava = false;
+        boolean runEchoEcho = true;
 
-        for (Runnable task : submitThroughput.tasks) {
-            submitThroughput.submit(task);
+        if (runJava) {
+
+            long startTimeJava = System.currentTimeMillis();
+            ExecutorService scheduler = Executors.newFixedThreadPool(threads);
+            for (Runnable task : tasks) {
+                scheduler.submit(task);
+            }
+
+            System.out.println("Java submit time taken : " + String.valueOf(System.currentTimeMillis() - startTimeJava) + " ms");
+
+            scheduler.shutdown();
+            try {
+                scheduler.awaitTermination(500000L, java.util.concurrent.TimeUnit.MILLISECONDS);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            
+
+        }
+        
+
+        tasks = submitThroughput.createTasks(1_000_000);
+        
+        if (runEchoEcho) {
+            long startTimeEchoEcho = System.currentTimeMillis();
+
+            EchoEcho echoEcho = new EchoEcho(threads);
+
+            for (Runnable task : tasks) {
+                echoEcho.submit(task);
+            }
+
+            System.out.println("EchoEcho submit time taken : " + String.valueOf(System.currentTimeMillis() - startTimeEchoEcho) + " ms");
+
+            echoEcho.shutdown();
+            echoEcho.awaitTermination(500000L);
+
+            
+            
         }
 
-        System.out.println("EchoEcho time taken : " + String.valueOf(System.currentTimeMillis() - startTimeEchoEcho) + " ms");
-
-
-        submitThroughput.threadPool.shutdown();
-        submitThroughput.threadPool.awaitTermination(500000L);
 
         
 
-        long startTimeJava = System.currentTimeMillis();
-
-        for (Runnable task : submitThroughput.tasks) {
-            submitThroughput.javaSubmit(task);
-        }
-
-        System.out.println("Java time taken : " + String.valueOf(System.currentTimeMillis() - startTimeJava) + " ms");
-
-        submitThroughput.scheduler.shutdown();
-        try {
-            submitThroughput.scheduler.awaitTermination(500000L, java.util.concurrent.TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
+        
     }
 
 }

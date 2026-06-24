@@ -1,5 +1,6 @@
 package com.micorln.echoecho.core;
 
+import java.nio.channels.Pipe.SourceChannel;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -31,30 +32,39 @@ public class EchoEcho {
     List<Worker> workers;
     private volatile PoolState poolState;
     AtomicInteger taskIds;
-    private final long TIME_TO_WAIT = 100L;
+    private final long TIME_TO_WAIT = 50L;
     private final boolean DEBUG;
-
-    private Object submitLock = new Object();
-    private Object pollLock = new Object();
 
     public EchoEcho(int threadPoolSize) {
         workers = new ArrayList<>();
+        System.out.println(
+            "Thread pool size is set to : " + String.valueOf(threadPoolSize)
+        );
+        
         this.threadPoolSize = threadPoolSize;
+        
         this.taskQueue = new TaskQueue<TaskWrapper<?>>((t1, t2) -> Long.compare(t2.getPriority(), t1.getPriority()));
         this.poolState = PoolState.IDLE;
         this.taskIds = new AtomicInteger(0);
         this.DEBUG = false;
-        startWorkerManager();
+        createWorkers();
+        // startWorkerManager();
     }
 
     public EchoEcho(int threadPoolSize, boolean debug) {
         workers = new ArrayList<>();
-        this.threadPoolSize = Runtime.getRuntime().availableProcessors();
+        if (debug) {
+            System.out.println("Thread pool size is set to : " + String.valueOf(threadPoolSize));
+        }
+        
+        this.threadPoolSize = threadPoolSize;
+        
         this.taskQueue = new TaskQueue<TaskWrapper<?>>((t1, t2) -> Long.compare(t2.getPriority(), t1.getPriority()));
-        this.poolState = PoolState.IDLE;
+        this.poolState = PoolState.RUNNING;
         this.taskIds = new AtomicInteger(0);
         this.DEBUG = debug;
-        startWorkerManager();
+        createWorkers();
+        // startWorkerManager();
     }
 
     public synchronized int countWorkers() {
@@ -67,25 +77,38 @@ public class EchoEcho {
         return aliveWorkers;
     }
 
+    private synchronized void createWorkers() {
+        if (DEBUG) {
+            System.out.println("Hello!");
+        }
+        
+        for (int i = 0; i < threadPoolSize; i++) {
+            Worker newGuy = new Worker(taskQueue, i + 1, TIME_TO_WAIT);
+            newGuy.start();
+            workers.add(newGuy);
+        }
+        // System.out.println("Current worker count : " + String.valueOf(countWorkers()));
+        if (DEBUG) {
+            System.out.println("Current worker count from create workers: " + String.valueOf(countWorkers()));
+        }
+    }
 
     public EchoFuture<Void> submit(Runnable task) {
         
-        if (DEBUG) {
-            System.out.println("Current worker count : " + String.valueOf(countWorkers()));
-        }
+        // if (DEBUG) {
+        //     // System.out.println("Current worker count : " + String.valueOf(countWorkers()));
+        // }
         checkPoolState();
         RunnableTask newRunnableTask = new RunnableTask(task, taskIds.incrementAndGet());
         taskQueue.submit(newRunnableTask);
-        // notifyAll();
-        // manageWorkers();
         return newRunnableTask.getFuture();
         
     }
     
     public synchronized EchoFuture<Void> submit(Runnable task, long priority) {
-        if (DEBUG) {
-            System.out.println("Current worker count : " + String.valueOf(countWorkers()));
-        }
+        // if (DEBUG) {
+        //     System.out.println("Current worker count : " + String.valueOf(countWorkers()));
+        // }
 
         checkPoolState();
         RunnableTask newRunnableTask = new RunnableTask(task, taskIds.incrementAndGet(), priority);
@@ -105,9 +128,9 @@ public class EchoEcho {
     }
 
     public synchronized <T> EchoFuture<T> submit(TaskWrapper<T> task) {
-        if (DEBUG) {
-            System.out.println("Current worker count : " + String.valueOf(countWorkers()));
-        }
+        // if (DEBUG) {
+        //     System.out.println("Current worker count : " + String.valueOf(countWorkers()));
+        // }
         
         checkPoolState();
         taskQueue.submit(task);
@@ -151,7 +174,7 @@ public class EchoEcho {
             }
 
             if (countWorkers() < threadPoolSize && taskQueue.size() > 0) {
-                Worker newGuy = new Worker(taskQueue, workers.size() + 1, TIME_TO_WAIT);
+                Worker newGuy = new Worker(taskQueue, workers.size() + 1);
                 newGuy.start();
                 workers.add(newGuy);
                 if (workers.size() == 1) {
@@ -192,6 +215,10 @@ public class EchoEcho {
 
     public synchronized void awaitTermination(long timeoutMillis) {
         long deadline = System.currentTimeMillis() + timeoutMillis;
+        if (DEBUG) {
+            System.out.println("Waiting for workers to finish... Current worker count : " + String.valueOf(countWorkers()));
+        }
+
         for (Worker w : workers) {
             if (System.currentTimeMillis() >= deadline) {
                 break;
@@ -210,6 +237,10 @@ public class EchoEcho {
                 w.interrupt();
             }
         }
+        if (DEBUG) {
+            System.out.println("Completed for workers to finish... Current worker count : " + String.valueOf(countWorkers()));
+        }
+
         poolState = PoolState.STOPPED;
     }
 

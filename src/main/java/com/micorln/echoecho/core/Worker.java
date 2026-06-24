@@ -46,6 +46,7 @@ public class Worker implements Runnable {
             try {
                 TaskWrapper<?> task = taskQueue.pollTask(timeToWait);
                 if (task == null) {
+                    // System.out.println("Thread " + String.valueOf(index) + " : Exiting because pollTask returned null. timeToWait=" + timeToWait);
                     break;
                 }
                 workerState = WorkerState.RUNNING;

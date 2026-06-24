@@ -18,13 +18,22 @@ public class TaskQueue <T> {
 
     volatile boolean open = true;
 
+    volatile boolean closed = false;
+
     public TaskQueue(Comparator<T> comparator) {
         this.taskQueue = new PriorityQueue<>(comparator);
     }
 
     public synchronized void shutdown() {
         open = false;
-        notify();
+        // closed = true;
+        notifyAll();
+    }
+
+    public synchronized void close() {
+        open = false;
+        closed = true;
+        notifyAll();
     }
 
     public synchronized void submit(T task) {
@@ -32,7 +41,7 @@ public class TaskQueue <T> {
             throw new IllegalStateException("Cannot submit task to a closed TaskQueue!");
         }
         taskQueue.add(task);
-        notify();
+        notifyAll();
     }
 
     public synchronized T peek() {
@@ -41,31 +50,41 @@ public class TaskQueue <T> {
 
     public synchronized T pollTask() throws InterruptedException {
         while (taskQueue.size() == 0) {
-            if (!open) {
+            if (closed) {
+                System.out.println("Returning null from pollTask() as the task queue is closed and empty -1!");
                 return null;
             }
             wait();
         }
 
         T topTask = taskQueue.poll();
-        notify();
+        notifyAll();
         return topTask;
     }
 
     public synchronized T pollTask(long timeToWait) throws InterruptedException {
-        if (taskQueue.size() == 0) {
-            if (!open) {
+        long startTime = System.currentTimeMillis();
+        while (taskQueue.size() == 0) {
+            if (closed) {
+                // System.out.println("Returning null from pollTask() as the task queue is closed and empty -2!");
                 return null;
             }
             wait(timeToWait);
+            if (System.currentTimeMillis() - startTime >= timeToWait) {
+                break;
+            }
         }
 
         if (taskQueue.size() == 0) {
+            // System.out.println("[pollTask] Timeout expired (waited " + (System.currentTimeMillis() - startTime) + "ms, timeout=" + timeToWait + "), queue empty, returning null");
             return null;
         }
 
         T topTask = taskQueue.poll();
-        notify();
+        // if (topTask == null) {
+            // System.out.println("[pollTask] Returning null - queue.poll() returned null");
+        // }
+        notifyAll();
         return topTask;
     }
 
